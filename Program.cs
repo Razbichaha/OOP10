@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace OOP10
 {
@@ -43,6 +44,15 @@ namespace OOP10
             _renderer.CreateAquarium();
             _statistic.DisplayFishStats(_aquarium.GetListFishs());
 
+            while (true)
+            {
+
+                _aquarium.lifeCycleFish();
+                _statistic.DisplayFishStats(_aquarium.GetListFishs());
+
+
+                Thread.Sleep(100);
+            }
 
         }
 
@@ -98,10 +108,10 @@ namespace OOP10
     class Statistic
     {
         // private ProgramCore _programCore = new();// рекурсия
-       // private Aquarium _aquarium = new();//рекурсия
+        // private Aquarium _aquarium = new();//рекурсия
         private Message _message = new();
 
-        private int _allQuantityFish = 0;
+        // private int _allQuantityFish = 0;
 
 
 
@@ -165,7 +175,7 @@ namespace OOP10
         private Config _config = new();
         // private Statistic _statistic = new(); рекурсия
 
-        internal void DisplayFishStats(Fish fish,int numberLine)
+        internal void DisplayFishStats(Fish fish, int numberLine)
         {
             string died;
 
@@ -174,7 +184,7 @@ namespace OOP10
             else
                 died = "Живая";
 
-            Console.SetCursorPosition(_config.MessageCoordinateLeftTop[0] , _config.MessageCoordinateLeftTop[1]+ numberLine);
+            Console.SetCursorPosition(_config.MessageCoordinateLeftTop[0], _config.MessageCoordinateLeftTop[1] + numberLine);
 
             Console.Write($"Id - {fish.Id} Жизнь - {fish.Healt}");
             Console.Write(" Скин - ");
@@ -210,8 +220,54 @@ namespace OOP10
         private Message _message = new();
         private List<Fish> _aquarium = new List<Fish>();
         private List<Fish> _allFish = new List<Fish>();
+        private int _lastId = 0;
 
         internal int NumberOfFish { get; private set; }
+
+        internal void lifeCycleFish()
+        {
+            int[] idDead = new int[0];
+
+            for (int i = 0; i < _aquarium.Count; i++)
+            {
+                _aquarium[i].RemoveOneLife();
+
+                //if (_aquarium[i].Died == true)
+                //{
+                //    int[] tempId = new int[idDead.Length + 1];
+                //    idDead = tempId;
+                //    idDead[idDead.Length-1] = i;
+                //   // break;
+                //}
+            }
+
+            bool tt = true;
+
+            while (tt)
+            {
+                foreach (Fish fish in _aquarium)
+                {
+                    if (fish.Died == true)
+                    {
+                       // tt = true;
+                      //  _aquarium.Remove(fish);
+                        break;
+                    }
+                       
+                }
+                foreach (Fish fish in _aquarium)
+                {
+                    if (fish.Died != true)
+                    {
+                        tt = false;
+                    }
+
+                }
+
+
+            }
+
+        }
 
         internal void SetNumberOfFish(int numberFish)
         {
@@ -226,6 +282,7 @@ namespace OOP10
                     Fish fish = new Fish(i);
                     _aquarium.Add(fish);
                     _allFish.Add(fish);
+                    _lastId++;
                 }
             }
             else
@@ -243,7 +300,7 @@ namespace OOP10
             return _allFish.Count;
         }
 
-        internal List< Fish> GetListFishs()
+        internal List<Fish> GetListFishs()
         {
             List<Fish> tempFishs = new();
 
@@ -283,6 +340,22 @@ namespace OOP10
             GeneratePointSpavn();
         }
 
+        internal void RemoveOneLife()
+        {
+            Healt--;
+
+            if (Healt <= 0)
+            {
+                Healt = 0;
+                Dead();
+            }
+        }
+
+        private void Dead()
+        {
+            Died = true;
+        }
+
         private int GenerateHealt()
         {
             int healt = _random.Next(_config.MinimumLifeTime, _config.MaximumLifeTime);
@@ -294,7 +367,7 @@ namespace OOP10
             ConsoleColor color;
 
             color = _config.Colors[(_random.Next(0, _config.GetQuantityColorFish()))];
-            if (color==ConsoleColor.Black)
+            if (color == ConsoleColor.Black)
             {
                 color = ConsoleColor.DarkBlue;
             }
@@ -309,17 +382,19 @@ namespace OOP10
 
         private void GeneratePointSpavn()
         {
-            int minimumNumberRandomLeft = _config.AnchorPointAquarium[0]+1;
+            int minimumNumberRandomLeft = _config.AnchorPointAquarium[0] + 1;
             int maximumNumberRandomLeft = _config.AnchorPointAquarium[0] + _config.AquariumSizeLeftTop[0] - 1;
-            int minimumNumberRandomTop = _config.AnchorPointAquarium[1] ;
+            int minimumNumberRandomTop = _config.AnchorPointAquarium[1];
             int maximumNumberRandomTop = _config.AnchorPointAquarium[1] + _config.AquariumSizeLeftTop[1] - 1;
 
-            PositionLeft = _random.Next(minimumNumberRandomLeft,maximumNumberRandomLeft);
+            PositionLeft = _random.Next(minimumNumberRandomLeft, maximumNumberRandomLeft);
             PositionTop = _random.Next(minimumNumberRandomTop, maximumNumberRandomTop);
 
         }
+
+
     }
-    
+
 
 
 }
