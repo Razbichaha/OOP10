@@ -265,6 +265,11 @@ namespace OOP10
                         thereAreLive = false;
                     }
                 }
+
+                if (_aquarium.Length==0)
+                {
+                    thereAreLive = false;
+                }
             }
         }
 
