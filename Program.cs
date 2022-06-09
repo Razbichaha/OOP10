@@ -17,14 +17,10 @@ namespace OOP10
         static void Main(string[] args)
         {
             ProgramCore programCore = new ProgramCore();
-
             programCore.Game();
-
             Console.ReadLine();
         }
     }
-
-
 
     class ProgramCore
     {
@@ -32,104 +28,85 @@ namespace OOP10
         private Aquarium _aquarium = new();
         private Config _config = new();
         private Random _random = new();
-        private Renderer _renderer = new();
-        private Statistic _statistic = new();
+        private Thread _threadKey;
 
+        private bool _continueCicle = true;
+        private bool _addFish = false;
+        private bool _deleteFish = false;
 
         internal void Game()
         {
             _aquarium.AddFish(_random.Next(_config.MinimumFish, _config.MaximumFish));
-            _message.ShowQuantityFish(_statistic.AllQuantityFish(_aquarium));
-            SetanchorPointAquarium();
-            _renderer.CreateAquarium();
-            _statistic.DisplayFishStats(_aquarium.GetListFishs());
+            _message.ShowQuantityFish(ShowAllQuantityFish());
+            _threadKey = new Thread(StartKeyboardThread);
+            _threadKey.Start();
 
-            while (true)
+            while (_continueCicle)
             {
+                _aquarium.CommitlifeCycleFish();
+                ShowDisplayFishStats(_aquarium.GetMassivFishs());
 
-                _aquarium.lifeCycleFish();
-                _statistic.DisplayFishStats(_aquarium.GetListFishs());
-
-
-                Thread.Sleep(100);
-            }
-
-        }
-
-        private void SetanchorPointAquarium()
-        {
-            int quantityFish = _aquarium.GetQuqntityFishOfAquarium();
-            int additionalLines = 2;
-
-            _config.SetanchorPointAquarium(quantityFish + additionalLines);
-        }
-
-    }
-
-    class Renderer
-    {
-        private Config _config = new();
-
-
-        internal void ShowFish(Aquarium aquarium)
-        {
-            Random random = new Random();
-
-            //foreach (var item in aquarium)
-            //{
-
-            //}
-
-        }
-
-        internal void CreateAquarium()
-        {
-            char wall = '|';
-            char bottom = '_';
-            int correction = 1;
-
-            for (int i = _config.AnchorPointAquarium[1]; i < _config.AnchorPointAquarium[1] + _config.AquariumSizeLeftTop[1]; i++)
-            {
-                Console.SetCursorPosition(_config.AnchorPointAquarium[0], i);
-                Console.Write(wall);
-                Console.SetCursorPosition(_config.AnchorPointAquarium[0] + _config.AquariumSizeLeftTop[0], i);
-                Console.Write(wall);
-            }
-
-            for (int i = _config.AnchorPointAquarium[0] + 1; i < _config.AnchorPointAquarium[0] + _config.AquariumSizeLeftTop[0]; i++)
-            {
-                Console.SetCursorPosition(i, _config.AnchorPointAquarium[1] + _config.AquariumSizeLeftTop[1] - correction);
-                Console.Write(bottom);
+                if (_addFish == true)
+                {
+                    _aquarium.AddFish(1);
+                    _message.ShowQuantityFish(ShowAllQuantityFish());
+                    _addFish = false;
+                }
+                if (_deleteFish == true)
+                {
+                    DeleteFish();
+                    _deleteFish = false;
+                }
+                Thread.Sleep(200);
             }
         }
 
-    }
-
-    class Statistic
-    {
-        // private ProgramCore _programCore = new();// рекурсия
-        // private Aquarium _aquarium = new();//рекурсия
-        private Message _message = new();
-
-        // private int _allQuantityFish = 0;
-
-
-
-        internal void DisplayFishStats(List<Fish> fishs)
+        private void DeleteFish()
         {
-            for (int i = 0; i < fishs.Count; i++)
+            int id = 0;
+
+            if (_message.EnterId(_aquarium.GetListId(), ref id))
             {
-                _message.DisplayFishStats(fishs[i], i + 1);
+                _aquarium.DeleteFish(id);
             }
-
         }
 
-        internal int AllQuantityFish(Aquarium aquarium)
+        private void StartKeyboardThread()
         {
-            return aquarium.GetQuantityFishAll();
+            while (_continueCicle)
+            {
+                ConsoleKeyInfo key = Console.ReadKey();
+
+                if (key.Key == ConsoleKey.Escape)
+                {
+                    _continueCicle = false;
+                }
+
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    _addFish = true;
+
+                }
+
+                if (key.Key == ConsoleKey.Backspace)
+                {
+                    _deleteFish = true;
+                }
+            }
         }
 
+        private int ShowAllQuantityFish()
+        {
+            return _aquarium.GetQuantityFishAll();
+        }
 
+        private void ShowDisplayFishStats(Fish[] fishs)
+        {
+            for (int i = 0; i < fishs.Length; i++)
+            {
+                _message.ShowDisplayFishStats(fishs[i], i + 1);
+            }
+        }
     }
 
     class Config
@@ -137,11 +114,10 @@ namespace OOP10
         private ConsoleColor[] _colors = (ConsoleColor[])ConsoleColor.GetValues(typeof(ConsoleColor));
         private char[] _skin = { '#', '@', '%', '$', '&', '№' };
 
-
         private int _maximumFish = 10;
-        private int _minimumFish = 2;
+        private int _minimumFish = 5;
         private int _maximumLifeTime = 100;
-        private int _minimumLifeTime = 50;
+        private int _minimumLifeTime = 40;
         private int[] _messageCoordinateLeftTop = { 1, 1 };
         private int[] _aquariumSizeLeftTop = { 60, 20 };
         private int[] _anchorPointAquarium = { 2, 5 };
@@ -156,42 +132,66 @@ namespace OOP10
         internal int MaximumLifeTime { get => _maximumLifeTime; }
         internal int MinimumLifeTime { get => _minimumLifeTime; }
 
-
-        internal void SetanchorPointAquarium(int left)
-        {
-            _anchorPointAquarium[0] = left;
-        }
-
         internal int GetQuantityColorFish()
         {
             return Colors.Length;
         }
-
-
     }
 
     class Message
     {
         private Config _config = new();
-        // private Statistic _statistic = new(); рекурсия
 
-        internal void DisplayFishStats(Fish fish, int numberLine)
+        internal bool EnterId(List<int> idAll, ref int id)
+        {
+            int tempId = id;
+            bool thereIsId = false;
+            SetCursorPositionMessag();
+            Console.Write("Введите ID рыбы для удаления - ");
+            string idString = Console.ReadLine();
+
+            if (int.TryParse(idString, out tempId))
+            {
+                if (idAll.Exists(x => x == tempId))
+                {
+                    id = tempId;
+                    thereIsId = true;
+                }
+                else
+                {
+                    Console.Write("Введенный Id отсуесевует.");
+                }
+            }
+            else
+            {
+                Console.Write("Вы ввели не число попробуйте еще раз.");
+            }
+            return thereIsId;
+        }
+
+        internal void ShowDisplayFishStats(Fish fish, int numberLine)
         {
             string died;
+            int indent = numberLine + 5;
 
             if (fish.Died == true)
                 died = "Мертвая";
             else
                 died = "Живая";
 
-            Console.SetCursorPosition(_config.MessageCoordinateLeftTop[0], _config.MessageCoordinateLeftTop[1] + numberLine);
-
+            Console.SetCursorPosition(_config.MessageCoordinateLeftTop[0], _config.MessageCoordinateLeftTop[1] + indent);
             Console.Write($"Id - {fish.Id} Жизнь - {fish.Healt}");
             Console.Write(" Скин - ");
             Console.ForegroundColor = fish.colorFish;
             Console.Write(fish.Skin);
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write($" Статус - {died}");
+            Console.Write($" Статус - {died}     ");
+            Console.WriteLine();
+        }
+
+        internal void Clear()
+        {
+            Console.Clear();
         }
 
         internal void ShowErrorMaximumFish()
@@ -205,7 +205,12 @@ namespace OOP10
         internal void ShowQuantityFish(int allFish)
         {
             SetCursorPositionMessag();
-            Console.Write($"Всего рыб рожденно - {allFish}");
+            Console.WriteLine();
+            Console.Write($"Всего рыб в аквариуме - {allFish}");
+            Console.WriteLine();
+            Console.WriteLine("Для выхода нажмите esc.");
+            Console.WriteLine("Чтобы добавить рыбу, нажмите Enter.");
+            Console.WriteLine("Чтобы удалить рыбу, нажмите Bacspace");
         }
 
         private void SetCursorPositionMessag()
@@ -218,71 +223,64 @@ namespace OOP10
     {
         private Config _config = new();
         private Message _message = new();
-        private List<Fish> _aquarium = new List<Fish>();
+        private Fish[] _aquarium = new Fish[0];
         private List<Fish> _allFish = new List<Fish>();
         private int _lastId = 0;
 
-        internal int NumberOfFish { get; private set; }
-
-        internal void lifeCycleFish()
+        internal List<int> GetListId()
         {
-            int[] idDead = new int[0];
+            List<int> tempId = new List<int>();
 
-            for (int i = 0; i < _aquarium.Count; i++)
+            foreach (Fish fish in _aquarium)
+            {
+                tempId.Add(fish.Id);
+            }
+            return tempId;
+        }
+
+        internal void CommitlifeCycleFish()
+        {
+            bool thereAreLive = true;
+
+            for (int i = 0; i < _aquarium.Length; i++)
             {
                 _aquarium[i].RemoveOneLife();
-
-                //if (_aquarium[i].Died == true)
-                //{
-                //    int[] tempId = new int[idDead.Length + 1];
-                //    idDead = tempId;
-                //    idDead[idDead.Length-1] = i;
-                //   // break;
-                //}
             }
 
-            bool tt = true;
-
-            while (tt)
+            while (thereAreLive)
             {
                 foreach (Fish fish in _aquarium)
                 {
                     if (fish.Died == true)
                     {
-                       // tt = true;
-                      //  _aquarium.Remove(fish);
+                        RemoveFish(fish);
                         break;
                     }
-                       
                 }
-                foreach (Fish fish in _aquarium)
+
+                for (int i = 0; i < _aquarium.Length; i++)
                 {
-                    if (fish.Died != true)
+                    if (_aquarium[i].Died == false | i == _aquarium.Length - 1 | _aquarium.Length == 0)
                     {
-                        tt = false;
+                        thereAreLive = false;
                     }
-
                 }
-
-
             }
-
         }
 
-        internal void SetNumberOfFish(int numberFish)
-        {
-            NumberOfFish = numberFish;
-        }
         internal void AddFish(int quantityFish)
         {
-            if (quantityFish < _config.MaximumFish)
+            int tempId = _lastId;
+
+            if (_aquarium.Length < _config.MaximumFish)
             {
-                for (int i = 0; i < quantityFish; i++)
+                for (int i = tempId; i < quantityFish + tempId; i++)
                 {
-                    Fish fish = new Fish(i);
-                    _aquarium.Add(fish);
-                    _allFish.Add(fish);
                     _lastId++;
+                    Fish fish = new Fish(i);
+
+                    AddFishToAquarium(fish);
+                    _allFish.Add(fish);
                 }
             }
             else
@@ -291,24 +289,62 @@ namespace OOP10
             }
         }
 
-        internal int GetQuqntityFishOfAquarium()
+        internal void DeleteFish(int id)
         {
-            return _aquarium.Count;
+            foreach (Fish fish in _aquarium)
+            {
+                if (fish.Id == id)
+                {
+                    RemoveFish(fish);
+                    break;
+                }
+            }
         }
+
         internal int GetQuantityFishAll()
         {
             return _allFish.Count;
         }
 
-        internal List<Fish> GetListFishs()
+        internal Fish[] GetMassivFishs()
         {
-            List<Fish> tempFishs = new();
+            Fish[] tempFishs = new Fish[_aquarium.Length];
 
-            foreach (Fish fish in _aquarium)
+            for (int i = 0; i < _aquarium.Length; i++)
             {
-                tempFishs.Add(fish);
+                tempFishs[i] = _aquarium[i];
             }
             return tempFishs;
+        }
+
+        private void AddFishToAquarium(Fish fish)
+        {
+            Fish[] tempFish = new Fish[_aquarium.Length + 1];
+
+            for (int i = 0; i < _aquarium.Length; i++)
+            {
+                tempFish[i] = _aquarium[i];
+            }
+            _aquarium = tempFish;
+            tempFish[_aquarium.Length - 1] = fish;
+        }
+
+        private void RemoveFish(Fish fish)
+        {
+            Fish[] tempFishs = new Fish[_aquarium.Length - 1];
+            int tt = 0;
+
+            for (int i = 0; i < _aquarium.Length; i++)
+            {
+                if (_aquarium[i] != fish)
+                {
+                    tempFishs[tt] = _aquarium[i];
+                    tt++;
+                }
+            }
+            _aquarium = tempFishs;
+            _message.Clear();
+            _message.ShowQuantityFish(_aquarium.Length);
         }
     }
 
@@ -318,6 +354,7 @@ namespace OOP10
         Random _random = new();
 
         internal int Id { get; private set; }
+
         internal int Healt { get; private set; }
 
         internal int PositionLeft { get; private set; }
@@ -330,7 +367,7 @@ namespace OOP10
 
         internal ConsoleColor colorFish { get; private set; }
 
-        public Fish(int id)
+        internal Fish(int id)
         {
             Id = id;
             Healt = GenerateHealt();
@@ -347,11 +384,11 @@ namespace OOP10
             if (Healt <= 0)
             {
                 Healt = 0;
-                Dead();
+                KillFish();
             }
         }
 
-        private void Dead()
+        private void KillFish()
         {
             Died = true;
         }
@@ -391,10 +428,5 @@ namespace OOP10
             PositionTop = _random.Next(minimumNumberRandomTop, maximumNumberRandomTop);
 
         }
-
-
     }
-
-
-
 }
