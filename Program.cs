@@ -35,7 +35,7 @@ namespace OOP10
 
             while (_continueCicle)
             {
-                _aquarium.CommitlifeCycleFish();
+                _aquarium.CompleteLifeCycleAquarium();
                 ShowDisplayFishStats(_aquarium.GetMassivFishs());
 
                 if (_addFish == true)
@@ -103,7 +103,7 @@ namespace OOP10
 
     class Config
     {
-        private ConsoleColor[] _colors = (ConsoleColor[])ConsoleColor.GetValues(typeof(ConsoleColor));
+        private readonly ConsoleColor[] _colors = (ConsoleColor[])ConsoleColor.GetValues(typeof(ConsoleColor));
         private char[] _skin = { '#', '@', '%', '$', '&', '№' };
 
         private int _maximumFish = 10;
@@ -114,19 +114,39 @@ namespace OOP10
         private int[] _aquariumSizeLeftTop = { 60, 20 };
         private int[] _anchorPointAquarium = { 2, 5 };
 
-        internal int[] AquariumSizeLeftTop { get => _aquariumSizeLeftTop; }
-        internal int[] AnchorPointAquarium { get => _anchorPointAquarium; }
-        internal int[] MessageCoordinateLeftTop { get => _messageCoordinateLeftTop; }
-        internal ConsoleColor[] Colors { get => _colors; }
-        internal char[] Skin { get => _skin; }
         internal int MaximumFish { get => _maximumFish; }
         internal int MinimumFish { get => _minimumFish; }
         internal int MaximumLifeTime { get => _maximumLifeTime; }
         internal int MinimumLifeTime { get => _minimumLifeTime; }
 
+        internal ConsoleColor[] GetColors()
+        {
+            return _colors;
+        }
+
+        internal int[] GetAquariumSizeLeftTop()
+        {
+            return _aquariumSizeLeftTop;
+        }
+
+        internal int[] GetAnchorPointAquarium()
+        {
+            return _anchorPointAquarium;
+        }
+
+        internal int[] GetMessageCoordinateLeftTop()
+        {
+            return _messageCoordinateLeftTop;
+        }
+
+        internal char[] GetSkin()
+        {
+            return _skin;
+        }
+
         internal int GetQuantityColorFish()
         {
-            return Colors.Length;
+            return GetColors().Length;
         }
     }
 
@@ -144,7 +164,7 @@ namespace OOP10
 
             if (int.TryParse(idString, out tempId))
             {
-                if (idAll.Exists(x => x == tempId))
+                if (idAll.Exists(idFromList => idFromList == tempId))
                 {
                     id = tempId;
                     thereIsId = true;
@@ -163,21 +183,21 @@ namespace OOP10
 
         internal void ShowDisplayFishStats(Fish fish, int numberLine)
         {
-            string died;
+            string status;
             int indent = numberLine + 5;
 
             if (fish.Died == true)
-                died = "Мертвая";
+                status = "Мертвая";
             else
-                died = "Живая";
+                status = "Живая";
 
-            Console.SetCursorPosition(_config.MessageCoordinateLeftTop[0], _config.MessageCoordinateLeftTop[1] + indent);
+            Console.SetCursorPosition(_config.GetMessageCoordinateLeftTop()[0], _config.GetMessageCoordinateLeftTop()[1] + indent);
             Console.Write($"Id - {fish.Id} Жизнь - {fish.Healt}");
             Console.Write(" Скин - ");
             Console.ForegroundColor = fish.colorFish;
             Console.Write(fish.Skin);
             Console.ForegroundColor = ConsoleColor.White;
-            Console.Write($" Статус - {died}     ");
+            Console.Write($" Статус - {status}     ");
             Console.WriteLine();
         }
 
@@ -207,7 +227,7 @@ namespace OOP10
 
         private void SetCursorPositionMessag()
         {
-            Console.SetCursorPosition(_config.MessageCoordinateLeftTop[0], _config.MessageCoordinateLeftTop[1]);
+            Console.SetCursorPosition(_config.GetMessageCoordinateLeftTop()[0], _config.GetMessageCoordinateLeftTop()[1]);
         }
     }
 
@@ -230,7 +250,7 @@ namespace OOP10
             return tempId;
         }
 
-        internal void CommitlifeCycleFish()
+        internal void CompleteLifeCycleAquarium()
         {
             bool thereAreLive = true;
 
@@ -258,7 +278,7 @@ namespace OOP10
                     }
                 }
 
-                if (_aquarium.Length==0)
+                if (_aquarium.Length == 0)
                 {
                     thereAreLive = false;
                 }
@@ -329,14 +349,14 @@ namespace OOP10
         private void RemoveFish(Fish fish)
         {
             Fish[] tempFishs = new Fish[_aquarium.Length - 1];
-            int tt = 0;
+            int index = 0;
 
             for (int i = 0; i < _aquarium.Length; i++)
             {
                 if (_aquarium[i] != fish)
                 {
-                    tempFishs[tt] = _aquarium[i];
-                    tt++;
+                    tempFishs[index] = _aquarium[i];
+                    index++;
                 }
             }
             _aquarium = tempFishs;
@@ -348,7 +368,7 @@ namespace OOP10
     class Fish
     {
         private Config _config = new();
-        Random _random = new();
+        private Random _random = new();
 
         internal int Id { get; private set; }
 
@@ -400,7 +420,7 @@ namespace OOP10
         {
             ConsoleColor color;
 
-            color = _config.Colors[(_random.Next(0, _config.GetQuantityColorFish()))];
+            color = _config.GetColors()[(_random.Next(0, _config.GetQuantityColorFish()))];
             if (color == ConsoleColor.Black)
             {
                 color = ConsoleColor.DarkBlue;
@@ -410,16 +430,16 @@ namespace OOP10
 
         private char GenerateSkin()
         {
-            char skin = _config.Skin[_random.Next(0, _config.Skin.Length)];
+            char skin = _config.GetSkin()[_random.Next(0, _config.GetSkin().Length)];
             return skin;
         }
 
         private void GeneratePointSpavn()
         {
-            int minimumNumberRandomLeft = _config.AnchorPointAquarium[0] + 1;
-            int maximumNumberRandomLeft = _config.AnchorPointAquarium[0] + _config.AquariumSizeLeftTop[0] - 1;
-            int minimumNumberRandomTop = _config.AnchorPointAquarium[1];
-            int maximumNumberRandomTop = _config.AnchorPointAquarium[1] + _config.AquariumSizeLeftTop[1] - 1;
+            int minimumNumberRandomLeft = _config.GetAnchorPointAquarium()[0] + 1;
+            int maximumNumberRandomLeft = _config.GetAnchorPointAquarium()[0] + _config.GetAquariumSizeLeftTop()[0] - 1;
+            int minimumNumberRandomTop = _config.GetAnchorPointAquarium()[1];
+            int maximumNumberRandomTop = _config.GetAnchorPointAquarium()[1] + _config.GetAquariumSizeLeftTop()[1] - 1;
 
             PositionLeft = _random.Next(minimumNumberRandomLeft, maximumNumberRandomLeft);
             PositionTop = _random.Next(minimumNumberRandomTop, maximumNumberRandomTop);
